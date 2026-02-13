@@ -101,7 +101,7 @@ Deployment using Docker / Cloud platforms
 🤝 Contribution Guidelines
 Contributions are welcome!
 
-Fork the repository
+Fork repository
 
 Create a feature branch
 
