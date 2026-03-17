@@ -332,7 +332,7 @@ def get_profile(current_user):
 def get_user_profile(current_user):
     """Get complete user profile with all fields for dashboard"""
     try:
-        print(f"📊 User profile requested for: {current_user.email}")
+        print(f" User profile requested for: {current_user.email}")
         
         # Get processed education if exists
         processed_data = None
@@ -403,7 +403,7 @@ def get_user_profile(current_user):
             'processed': processed_data
         }
         
-        print(f"✅ User profile prepared for {current_user.email}")
+        print(f" User profile prepared for {current_user.email}")
         
         return jsonify({
             'success': True,
@@ -411,7 +411,7 @@ def get_user_profile(current_user):
         })
         
     except Exception as e:
-        print(f"❌ Error in get_user_profile: {e}")
+        print(f" Error in get_user_profile: {e}")
         traceback.print_exc()
         
         # Fallback to basic user info
@@ -480,18 +480,18 @@ def add_education(current_user):
     session = db.session
     try:
         data = request.get_json()
-        print(f"🎓 Education submission for: {current_user.email}")
+        print(f" Education submission for: {current_user.email}")
         
         # ===== VALIDATION =====
         errors = validate_education_data(data)
         if errors:
-            print(f"❌ Validation errors: {errors}")
+            print(f" Validation errors: {errors}")
             return jsonify({
                 'message': 'Validation failed',
                 'errors': errors
             }), 400
         
-        print("✅ Validation passed")
+        print(" Validation passed")
         
         # ===== HELPER FUNCTIONS =====
         def safe_int(value, default=0):
@@ -519,7 +519,7 @@ def add_education(current_user):
             return str(value).strip()
         
         # ===== UPDATE USER FIELDS =====
-        print("🔄 Updating user fields...")
+        print(" Updating user fields...")
         
         try:
             # Academic fields
@@ -614,20 +614,20 @@ def add_education(current_user):
             # Calculate profile completion
             try:
                 completion = current_user.calculate_profile_completion()
-                print(f"📊 Profile completion calculated: {completion}%")
+                print(f" Profile completion calculated: {completion}%")
             except Exception as e:
-                print(f"⚠️ Error in calculate_profile_completion: {e}")
+                print(f" Error in calculate_profile_completion: {e}")
                 current_user.profile_completion = 50
                 current_user.is_profile_complete = False
             
-            print(f"✅ User fields updated. Completion: {current_user.profile_completion}%")
+            print(f" User fields updated. Completion: {current_user.profile_completion}%")
             
         except Exception as e:
-            print(f"❌ Error updating user fields: {e}")
+            print(f" Error updating user fields: {e}")
             raise
         
         # ===== PROCESSED EDUCATION =====
-        print("🔄 Creating/updating processed education...")
+        print(" Creating/updating processed education...")
         
         try:
             processed = current_user.processed_education
@@ -635,26 +635,26 @@ def add_education(current_user):
                 processed = ProcessedEducation(user_id=current_user.id)
                 session.add(processed)
                 current_user.processed_education = processed
-                print("✅ Created new ProcessedEducation")
+                print(" Created new ProcessedEducation")
             else:
-                print("✅ Updating existing ProcessedEducation")
+                print(" Updating existing ProcessedEducation")
             
             # Update vectors
             processed.update_vectors(current_user)
-            print("✅ Updated processed vectors")
+            print(" Updated processed vectors")
             
         except Exception as e:
-            print(f"⚠️ Error in processed education: {e}")
+            print(f" Error in processed education: {e}")
         
         # ===== COMMIT TRANSACTION =====
-        print("💾 Committing to database...")
+        print(" Committing to database...")
         try:
             session.commit()
-            print("✅ Database commit successful!")
+            print(" Database commit successful!")
             session.refresh(current_user)
             
         except Exception as e:
-            print(f"❌ Database commit failed: {e}")
+            print(f" Database commit failed: {e}")
             session.rollback()
             raise
         
@@ -671,14 +671,14 @@ def add_education(current_user):
         if current_user.processed_education:
             response_data['processed'] = current_user.processed_education.to_dict()
         
-        print(f"🎉 Education submission completed for {current_user.email}")
+        print(f" Education submission completed for {current_user.email}")
         
         return jsonify(response_data), 201
         
     except Exception as e:
         if 'session' in locals():
             session.rollback()
-        print(f"❌ CRITICAL ERROR in education submission: {e}")
+        print(f" CRITICAL ERROR in education submission: {e}")
         traceback.print_exc()
         
         return jsonify({
@@ -694,7 +694,7 @@ def add_education(current_user):
 @token_required
 def predict_jobs(current_user):
     try:
-        print(f"🎯 Enhanced prediction requested for: {current_user.email}")
+        print(f" Enhanced prediction requested for: {current_user.email}")
         
         # Get POST data if available (frontend may send updated data)
         post_data = request.get_json() or {}
@@ -725,14 +725,14 @@ def predict_jobs(current_user):
             predictions = predict_job_roles_enhanced(user_profile)
             
             if not predictions or len(predictions) == 0:
-                print("⚠️ Warning: No predictions generated")
+                print(" Warning: No predictions generated")
                 return jsonify({
                     'success': False,
                     'message': 'Unable to generate predictions. Please ensure your profile is complete.',
                     'predictions': []
                 }), 400
             
-            print(f"✅ Enhanced predictions generated: {len(predictions)} jobs")
+            print(f"Enhanced predictions generated: {len(predictions)} jobs")
         except Exception as pred_error:
             print(f"❌ Prediction generation error: {pred_error}")
             import traceback
@@ -2085,18 +2085,18 @@ with app.app_context():
         admin.set_password('Admin@123')
         db.session.add(admin)
         db.session.commit()
-        print("✅ Admin user created!")
+        print(" Admin user created!")
         print(f"   Email: {admin_email}")
         print("   Password: Admin@123")
     
     # Check if ProcessedEducation table exists
     try:
         processed_count = ProcessedEducation.query.count()
-        print(f"✅ ProcessedEducation table exists with {processed_count} records")
+        print(f" ProcessedEducation table exists with {processed_count} records")
     except:
-        print("⚠️ ProcessedEducation table not created yet. Running db.create_all()...")
+        print(" ProcessedEducation table not created yet. Running db.create_all()...")
         db.create_all()
-        print("✅ Tables created successfully!")
+        print(" Tables created successfully!")
 
 # ============================================
 # ERROR HANDLING
@@ -2137,10 +2137,10 @@ def forbidden(error):
 
 if __name__ == '__main__':
     print("\n" + "="*50)
-    print("🚀 Starting Edu2Job Backend API")
+    print(" Starting Edu2Job Backend API")
     print("="*50)
-    print("📡 API Base URL: http://localhost:5000")
-    print("\n📋 Available Endpoints:")
+    print(" API Base URL: http://localhost:5000")
+    print("\n Available Endpoints:")
     print("   GET  /api/debug/test                    - Debug test")
     print("   GET  /api/profile                       - Get user profile")
     print("   GET  /api/user/profile                  - Get complete user profile")
@@ -2149,11 +2149,11 @@ if __name__ == '__main__':
     print("   POST /api/predict                       - Get job predictions")
     print("   GET  /api/predictions                   - Get prediction history")
     print("   POST /api/change-password               - Change password")
-    print("\n🔧 Admin Endpoints:")
+    print("\n Admin Endpoints:")
     print("   GET  /api/admin/users                   - Get all users")
     print("   GET  /api/admin/predictions             - Get all predictions")
     print("   GET  /api/admin/dashboard-stats         - Get dashboard stats")
     print("   POST /api/admin/retrain-model           - Retrain ML model")
     print("="*50 + "\n")
-    
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=5000)
+    # app.run(debug=True, port=5000) for local host
