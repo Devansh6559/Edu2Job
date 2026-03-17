@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edu2Job - Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .sidebar {
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .nav-link {
+            color: rgba(255,255,255,0.8) !important;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: white !important;
+            background: rgba(255,255,255,0.1);
+        }
+        .card {
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .prediction-card {
+            border-left: 4px solid #667eea;
+        }
+        .confidence-high { color: #28a745; }
+        .confidence-medium { color: #ffc107; }
+        .confidence-low { color: #dc3545; }
+        .password-strength {
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .progress {
+            height: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar p-0">
+                <div class="p-4">
+                    <h4 class="text-white">Edu2Job</h4>
+                    <p class="text-white-50 small">Career Prediction System</p>
+                </div>
+                
+                <nav class="nav flex-column">
+                    <a class="nav-link active" href="#" onclick="showSection('dashboard')">
+                        <i class="fas fa-home me-2"></i> Dashboard
+                    </a>
+                    <!-- ADD THIS NEW LINE: -->
+                    <a class="nav-link" href="#" onclick="showSection('education')">
+                        <i class="fas fa-graduation-cap me-2"></i> Education
+                    </a>
+                    <a class="nav-link" href="#" onclick="showSection('profile')">
+                        <i class="fas fa-user me-2"></i> My Profile
+                    </a>
+                    
+                    
+                    <a class="nav-link" href="#" onclick="showSection('predict')">
+                        <i class="fas fa-chart-line me-2"></i> Job Prediction
+                    </a>
+                    <a class="nav-link" href="#" onclick="showSection('history')">
+                        <i class="fas fa-history me-2"></i> Prediction History
+                    </a>
+                    <a class="nav-link" href="#" onclick="showSection('feedback')">
+                        <i class="fas fa-comment-alt me-2"></i> Feedback
+                    </a>
+                    <a class="nav-link" href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 ms-sm-auto px-4 py-4">
+                <!-- Dashboard Section -->
+                <div id="dashboardSection">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3>Dashboard</h3>
+                        <span class="text-muted">Welcome, <span id="userName">User</span>!</span>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Profile Summary -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0"><i class="fas fa-user-graduate me-2"></i>Education Profile</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="profileSummary">
+                                        <p class="text-muted">Loading profile...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Prediction -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                                </div>
+                                <div class="card-body">
+                                    <button class="btn btn-primary w-100 mb-2" onclick="showSection('predict')">
+                                        <i class="fas fa-magic me-2"></i>Get Job Prediction
+                                    </button>
+                                    <button class="btn btn-outline-primary w-100" onclick="showSection('profile')">
+                                        <i class="fas fa-edit me-2"></i>Update Profile
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Insights Row -->
+                    <div class="row mt-3">
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Top Roles (Your Degree)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="insightDegreeRolesChart" height="180"></canvas>
+                                    <div id="insightDegreeRoles" class="small text-muted mt-2">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-pie-chart me-2"></i>Job Domains</h6>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="insightDomainsChart" height="180"></canvas>
+                                    <div id="insightDomains" class="small text-muted mt-2">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-12 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-users me-2"></i>Similar Profiles</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="insightContext" class="small text-muted">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Predictions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Recent Predictions</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recentPredictions">
+                                        <p class="text-muted">No predictions yet. <a href="#" onclick="showSection('predict')">Get your first prediction!</a></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Enhanced Profile Section -->
+                <div id="profileSection" style="display: none;">
+                    <h3 class="mb-4">My Profile</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <form id="profileForm">
+                                <div class="row">
+                                    <!-- Personal Information -->
+                                    <div class="col-md-6">
+                                        <h5>Personal Information</h5>
+                                        <div class="mb-3">
+                                            <label class="form-label">Full Name</label>
+                                            <input type="text" class="form-control" id="profileName" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Email</label>
+                                            <input type="email" class="form-control" id="profileEmail" readonly>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Enhanced Education Details -->
+                                    <div class="col-md-6">
+                                        <h5>Education Details</h5>
+                                        
+                                        <!-- Degree Dropdown -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Degree*</label>
+                                            <select class="form-control" id="profileDegree" required>
+                                                <option value="">Select Degree</option>
+                                                <option value="B.Tech">B.Tech</option>
+                                                <option value="B.Sc">B.Sc</option>
+                                                <option value="M.Tech">M.Tech</option>
+                                                <option value="BCA">BCA</option>
+                                                <option value="MCA">MCA</option>
+                                                <option value="B.E">B.E</option>
+                                                <option value="M.E">M.E</option>
+                                                <option value="B.Com">B.Com</option>
+                                                <option value="MBA">MBA</option>
+                                                <option value="Diploma">Diploma</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- Specialization Dropdown -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Specialization*</label>
+                                            <select class="form-control" id="profileSpecialization" required>
+                                                <option value="">Select Specialization</option>
+                                                <option value="CSE">CSE</option>
+                                                <option value="IT">IT</option>
+                                                <option value="ECE">ECE</option>
+                                                <option value="Mechanical">Mechanical</option>
+                                                <option value="Civil">Civil</option>
+                                                <option value="Electrical">Electrical</option>
+                                                <option value="Electronics">Electronics</option>
+                                                <option value="AI/ML">AI / ML</option>
+                                                <option value="Data Science">Data Science</option>
+                                                <option value="Cybersecurity">Cybersecurity</option>
+                                            </select>
+                                        </div>  
+                                        
+                                        <!-- CGPA Input -->
+                                        <div class="mb-3">
+                                            <label class="form-label" required>CGPA*</label>
+                                            <input type="number" step="0.1" min="0" max="10" class="form-control" 
+                                                id="profileCgpa" placeholder="Enter CGPA (0-10 scale)">
+                                        </div>
+                                        
+                                        <!-- Graduation Year Input -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Graduation Year*</label>
+                                            <input type="number" class="form-control" id="profileGraduationYear" 
+                                                min="2000" max="2030" placeholder="e.g., 2024">
+                                        </div>
+                                        
+                                        <!-- University Input -->
+                                        <div class="mb-3">
+                                            <label class="form-label">University</label>
+                                            <input type="text" class="form-control" id="profileUniversity" 
+                                                placeholder="Enter university name">
+                                        </div>
+                                        
+                                        <!-- Certifications Text Field (NEW) -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Certifications</label>
+                                            <textarea class="form-control" id="profileCertifications" 
+                                                    rows="3" placeholder="List your certifications (comma separated)"></textarea>
+                                            <small class="text-muted">e.g., AWS Certified, Google Cloud, Microsoft Azure, Python Certification</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Update Profile</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                                    <!-- Enhanced Education Form -->
+                    <div id="educationSection" style="display: none;">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0"><i class="fas fa-rocket me-2"></i>Build Your Career Profile</h4>
+                                <small class="text-white-80">Complete this form for accurate job predictions</small>
+                            </div>
+                            
+                            <div class="card-body">
+                                <!-- Progress Bar -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Profile Completion</span>
+                                        <span id="profileCompletion">0%</span>
+                                    </div>
+                                    <div class="progress" style="height: 10px;">
+                                        <div id="profileProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                
+                                <form id="educationForm">
+                                    <!-- Academic Section -->
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Academic Background</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Degree <span class="text-danger">*</span></label>
+                                                        <select class="form-control" id="degree" required onchange="updateProgress()">
+                                                            <option value="">Select Degree</option>
+                                                            <option value="1">B.Tech / B.E</option>
+                                                            <option value="2">M.Tech / M.E</option>
+                                                            <option value="3">BCA</option>
+                                                            <option value="4">MCA</option>
+                                                            <option value="5">B.Sc</option>
+                                                            <option value="6">M.Sc</option>
+                                                            <option value="7">MBA</option>
+                                                            <option value="8">Ph.D</option>
+                                                            <option value="9">Diploma</option>
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Specialization <span class="text-danger">*</span></label>
+                                                        <select class="form-control" id="specialization" required onchange="updateProgress()">
+                                                            <option value="">Select Specialization</option>
+                                                            <option value="1">Computer Science</option>
+                                                            <option value="2">Information Technology</option>
+                                                            <option value="3">Electronics</option>
+                                                            <option value="4">Mechanical</option>
+                                                            <option value="5">Civil</option>
+                                                            <option value="6">Electrical</option>
+                                                            <option value="7">AI/ML</option>
+                                                            <option value="8">Data Science</option>
+                                                            <option value="9">Cybersecurity</option>
+                                                            <option value="10">Business</option>
+                                                            <option value="11">Finance</option>
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">CGPA (0-10 scale) <span class="text-danger">*</span></label>
+                                                        <input type="number" step="0.01" min="0" max="10" class="form-control" 
+                                                            id="cgpa" placeholder="e.g., 8.5" required onchange="updateProgress()">
+                                                        <small class="text-muted">We'll normalize this automatically</small>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Graduation Year <span class="text-danger">*</span></label>
+                                                        <input type="number" min="2000" max="2030" class="form-control" 
+                                                            id="graduationYear" placeholder="e.g., 2024" required onchange="updateProgress()">
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">University</label>
+                                                        <input type="text" class="form-control" id="university" placeholder="Your university">
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Field Courses Completed</label>
+                                                        <input type="number" min="0" class="form-control" id="fieldCourses" value="0">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Skills & Experience Section -->
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0"><i class="fas fa-code me-2"></i>Skills & Experience</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Coding Skill Level <span class="text-danger">*</span></label>
+                                                        <select class="form-control" id="codingSkills" required onchange="updateProgress()">
+                                                            <option value="">Select Level</option>
+                                                            <option value="1">Beginner (0-1 years)</option>
+                                                            <option value="2">Intermediate (1-3 years)</option>
+                                                            <option value="3">Advanced (3+ years)</option>
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Certifications Count</label>
+                                                        <input type="number" min="0" class="form-control" id="certificationsCount" value="0">
+                                                        <small class="text-muted">e.g., AWS, Google Cloud, Microsoft</small>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Internships Completed</label>
+                                                        <input type="number" min="0" class="form-control" id="internshipsCount" value="0">
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Projects Completed</label>
+                                                        <input type="number" min="0" class="form-control" id="projectsCount" value="0">
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Total Experience (Months)</label>
+                                                        <input type="number" min="0" class="form-control" id="totalExperience" value="0">
+                                                        <small class="text-muted">0 for freshers</small>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Project Complexity</label>
+                                                        <select class="form-control" id="projectComplexity">
+                                                            <option value="1">Simple (Academic/Personal)</option>
+                                                            <option value="2">Medium (Industry-relevant)</option>
+                                                            <option value="3">Complex (Production-level)</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Research & Extracurricular Section -->
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0"><i class="fas fa-flask me-2"></i>Research & Activities</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Research Experience</label>
+                                                        <select class="form-control" id="researchLevel">
+                                                            <option value="0">No Research</option>
+                                                            <option value="1">Basic (College projects)</option>
+                                                            <option value="2">Advanced (Publications/Patents)</option>
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Publications Count</label>
+                                                        <input type="number" min="0" class="form-control" id="publicationsCount" value="0">
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Leadership Positions</label>
+                                                        <input type="number" min="0" class="form-control" id="leadershipPositions" value="0">
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Communication Skills</label>
+                                                        <select class="form-control" id="communicationSkills">
+                                                            <option value="1">Low</option>
+                                                            <option value="2">Medium</option>
+                                                            <option value="3">High</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Extracurricular Activities</label>
+                                                <textarea class="form-control" id="extracurriculars" rows="2" 
+                                                        placeholder="Sports, Clubs, Volunteering, etc."></textarea>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Tech Stack (comma separated)</label>
+                                                <textarea class="form-control" id="techStack" rows="2" 
+                                                        placeholder="Python, JavaScript, React, SQL, AWS, etc."></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Career Goals Section -->
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0"><i class="fas fa-bullseye me-2"></i>Career Goals</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Target Career Path <span class="text-danger">*</span></label>
+                                                        <select class="form-control" id="targetCareer" required onchange="updateProgress()">
+                                                            <option value="">Select Career Goal</option>
+                                                            <option value="1">Software Developer</option>
+                                                            <option value="2">Data Scientist</option>
+                                                            <option value="3">ML Engineer</option>
+                                                            <option value="4">DevOps Engineer</option>
+                                                            <option value="5">Cloud Architect</option>
+                                                            <option value="6">Cybersecurity Analyst</option>
+                                                            <option value="7">Business Analyst</option>
+                                                            <option value="8">Product Manager</option>
+                                                            <option value="9">Research Scientist</option>
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Career Tier Goal</label>
+                                                        <select class="form-control" id="careerTier">
+                                                            <option value="1">Entry Level</option>
+                                                            <option value="2">Mid Level</option>
+                                                            <option value="3">Senior Level</option>
+                                                            <option value="4">Lead/Manager</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Expected Salary (₹ LPA)</label>
+                                                        <input type="number" min="0" step="0.5" class="form-control" 
+                                                            id="salaryExpectation" placeholder="e.g., 12.5">
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Preferred Location</label>
+                                                        <select class="form-control" id="preferredLocation">
+                                                            <option value="1">Metro Cities</option>
+                                                            <option value="2">Tier-1 Cities</option>
+                                                            <option value="3">Tier-2 Cities</option>
+                                                            <option value="4">Remote</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Submit Button -->
+                                    <div class="text-center">
+                                        <button type="submit" class="btn btn-primary btn-lg px-5">
+                                            <i class="fas fa-rocket me-2"></i>Build My Career Profile
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary ms-2" onclick="showSection('dashboard')">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <!-- Response Area -->
+                                <div id="educationResponse" class="mt-4"></div>
+                            </div>
+                        </div>
+                    </div>
+                                    <div id="educationResponse" class="mt-4"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Why Submit Education?</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled">
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Get personalized job predictions</li>
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Better career recommendations</li>
+                                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Track your educational progress</li>
+                                        <li><i class="fas fa-check-circle text-success me-2"></i>Unlock premium features</li>
+                                    </ul>
+                                    <hr>
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Your education data is used solely to provide you with better career predictions.
+                                    </small>
+                                </div>
+                            </div>
+                        </div> -->
+                    </div>
+                </div>
+
+                    <!-- Change Password Card -->
+                    <!-- <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Change Password</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="changePasswordForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Current Password <span class="text-danger">*</span></label>
+                                            <input type="password" class="form-control" id="currentPassword" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">New Password <span class="text-danger">*</span></label>
+                                            <input type="password" class="form-control" id="newPassword" required 
+                                                   placeholder="Minimum 8 characters with uppercase, lowercase, number, and special character">
+                                            <div id="newPasswordStrength" class="password-strength"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Confirm New Password <span class="text-danger">*</span></label>
+                                            <input type="password" class="form-control" id="confirmPassword" required 
+                                                   placeholder="Re-enter your new password">
+                                            <div id="passwordMatch" class="password-strength"></div>
+                                        </div>
+                                        <div class="mt-4 pt-2">
+                                            <button type="submit" class="btn btn-warning w-100">
+                                                <i class="fas fa-key me-2"></i>Change Password
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div> -->
+                
+                <!-- Prediction Section -->
+                <div id="predictSection" style="display: none;">
+                    <h3 class="mb-4">Job Role Prediction</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Based on your education profile, we'll predict the most suitable job roles for you.
+                            </div>
+                            
+                            <div class="text-center py-4">
+                                <button class="btn btn-primary btn-lg" onclick="getPrediction()">
+                                    <i class="fas fa-brain me-2"></i>Generate Job Predictions
+                                </button>
+                            </div>
+                            
+                            <div id="predictionResults" class="mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- History Section -->
+                <div id="historySection" style="display: none;">
+                    <h3 class="mb-4">Prediction History</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="predictionHistory">
+                                <p class="text-muted">Loading prediction history...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Add this new section after the History section: -->
+                <!-- Feedback Section -->
+                <div id="feedbackSection" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3>Feedback & Ratings</h3>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary" onclick="showFeedbackType('prediction')">
+                                <i class="fas fa-chart-line me-1"></i> Prediction Feedback
+                            </button>
+                            <button class="btn btn-outline-success" onclick="showFeedbackType('system')">
+                                <i class="fas fa-cog me-1"></i> System Feedback
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Feedback Stats -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h2 id="feedbackCount" class="text-primary">0</h2>
+                                    <p class="text-muted mb-0">Total Feedback</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h2 id="avgRating" class="text-success">0.0</h2>
+                                    <p class="text-muted mb-0">Avg Rating</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h2 id="predictionFeedback" class="text-info">0</h2>
+                                    <p class="text-muted mb-0">Prediction Feedback</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h2 id="systemFeedback" class="text-warning">0</h2>
+                                    <p class="text-muted mb-0">System Feedback</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Feedback Forms -->
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <!-- Prediction Feedback Form -->
+                            <div class="card mb-4" id="predictionFeedbackCard">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0"><i class="fas fa-star me-2"></i>Rate a Prediction</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="predictionFeedbackForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">Select Prediction</label>
+                                            <select class="form-control" id="feedbackPredictionSelect" required>
+                                                <option value="">Choose a prediction to rate</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Rating (1-5 stars)</label>
+                                            <div class="rating-stars">
+                                                <div class="stars">
+                                                    <span class="star" data-value="1">★</span>
+                                                    <span class="star" data-value="2">★</span>
+                                                    <span class="star" data-value="3">★</span>
+                                                    <span class="star" data-value="4">★</span>
+                                                    <span class="star" data-value="5">★</span>
+                                                </div>
+                                                <input type="hidden" id="predictionRating" name="rating" value="0" required>
+                                                <small class="text-muted ms-2"><span id="ratingText">Not rated</span></small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Was the prediction accurate?</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="wasCorrect" id="correctYes" value="true">
+                                                <label class="form-check-label" for="correctYes">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="wasCorrect" id="correctNo" value="false">
+                                                <label class="form-check-label" for="correctNo">No</label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Comments (optional)</label>
+                                            <textarea class="form-control" id="predictionComment" rows="3" 
+                                                    placeholder="Share your thoughts about this prediction..."></textarea>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Improvement Suggestions (optional)</label>
+                                            <textarea class="form-control" id="predictionImprovements" rows="2" 
+                                                    placeholder="How can we make our predictions better?"></textarea>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="fas fa-paper-plane me-1"></i> Submit Prediction Feedback
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6">
+                            <!-- System Feedback Form -->
+                            <div class="card mb-4" id="systemFeedbackCard">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>System Feedback</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="systemFeedbackForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">Overall System Rating</label>
+                                            <div class="rating-stars">
+                                                <div class="stars">
+                                                    <span class="star" data-value="1">★</span>
+                                                    <span class="star" data-value="2">★</span>
+                                                    <span class="star" data-value="3">★</span>
+                                                    <span class="star" data-value="4">★</span>
+                                                    <span class="star" data-value="5">★</span>
+                                                </div>
+                                                <input type="hidden" id="systemRating" name="rating" value="0" required>
+                                                <small class="text-muted ms-2"><span id="systemRatingText">Not rated</span></small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Your Feedback (optional)</label>
+                                            <textarea class="form-control" id="systemComment" rows="3" 
+                                                    placeholder="Tell us about your experience with Edu2Job..."></textarea>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Suggestions for Improvement (optional)</label>
+                                            <textarea class="form-control" id="systemImprovements" rows="2" 
+                                                    placeholder="What features would you like to see?"></textarea>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-success w-100">
+                                            <i class="fas fa-paper-plane me-1"></i> Submit System Feedback
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <!-- Feedback History -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Your Recent Feedback</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="feedbackHistory" style="max-height: 300px; overflow-y: auto;">
+                                        <p class="text-muted">No feedback submitted yet.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Feedback History Details -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-list me-2"></i>All Your Feedback</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="feedbackTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Type</th>
+                                            <th>Rating</th>
+                                            <th>Prediction</th>
+                                            <th>Comment</th>
+                                            <th>Was Correct</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="feedbackTableBody">
+                                        <!-- Will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

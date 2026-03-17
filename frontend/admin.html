@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edu2Job - Admin Panel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .sidebar {
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .nav-link {
+            color: rgba(255,255,255,0.8) !important;
+            border-radius: 5px;
+            margin: 2px 0;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: white !important;
+            background: rgba(255,255,255,0.1);
+        }
+        .admin-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .stat-card {
+            border: none;
+            border-radius: 10px;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        .user-table {
+            font-size: 0.9rem;
+        }
+        .badge-admin { background-color: #dc3545; }
+        .badge-user { background-color: #28a745; }
+        .confidence-bar {
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .confidence-high { background: linear-gradient(90deg, #28a745, #20c997); }
+        .confidence-medium { background: linear-gradient(90deg, #ffc107, #fd7e14); }
+        .confidence-low { background: linear-gradient(90deg, #dc3545, #e83e8c); }
+
+        .skill-badge {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            margin: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar p-0">
+                <div class="p-4 text-center">
+                    <h4 class="text-white">Edu2Job</h4>
+                    <p class="text-white-50 small">Admin Panel</p>
+                </div>
+                
+                <nav class="nav flex-column p-3">
+                    <a class="nav-link active" href="#" onclick="showSection('dashboard')">
+                        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                    </a>
+                    <a class="nav-link" href="#" onclick="showSection('users')">
+                        <i class="fas fa-users me-2"></i> User Management
+                    </a>
+                    <a class="nav-link" href="#" onclick="showSection('predictions')">
+                        <i class="fas fa-chart-line me-2"></i> Predictions
+                    </a>
+                    <a class="nav-link" href="#" onclick="showSection('analytics')">
+                        <i class="fas fa-chart-bar me-2"></i> Analytics
+                    </a>
+                    <a class="nav-link" href="#" onclick="showSection('feedback')">
+                        <i class="fas fa-comment-alt me-2"></i> Feedback Management
+                    </a>
+                    <!-- Add Model Retraining Link -->
+                    <a class="nav-link" href="#" onclick="showSection('modelRetrain')">
+                        <i class="fas fa-brain me-2"></i> Model Retraining
+                    </a>
+                    <a class="nav-link" href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 ms-sm-auto px-4 py-4">
+                <!-- Admin Header -->
+                <div class="admin-header rounded p-4 mb-4">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">Admin Dashboard</h3>
+                            <p class="mb-0">Welcome back, <span id="adminName">Admin</span></p>
+                        </div>
+                        <div class="col-auto">
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-shield-alt me-1"></i> Administrator
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Section -->
+                <div id="dashboardSection">
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card stat-card bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="totalUsers">0</h4>
+                                            <p class="mb-0">Total Users</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-users fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card bg-success text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="totalPredictions">0</h4>
+                                            <p class="mb-0">Predictions</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-chart-line fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card bg-warning text-dark">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="todayUsers">0</h4>
+                                            <p class="mb-0">Today's Users</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-user-plus fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card bg-info text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="activeAdmins">0</h4>
+                                            <p class="mb-0">Admins</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-shield-alt fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-chart-area me-2"></i>Model Performance</h6>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="adminModelPerformance" height="200"></canvas>
+                                    <div id="adminModelMetrics" class="small text-muted mt-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-database me-2"></i>Training Dataset Snapshot</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="adminDatasetStats" class="small text-muted">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Recent Activity</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recentActivity">
+                                        <p class="text-muted">Loading recent activity...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Management Section -->
+                <div id="usersSection" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3>User Management</h3>
+                        <div class="d-flex">
+                            <input type="text" id="userSearch" class="form-control me-2" placeholder="Search users...">
+                            <button class="btn btn-primary" onclick="loadUsers()">
+                                <i class="fas fa-sync-alt me-1"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover user-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Degree</th>
+                                            <th>Joined</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usersTable">
+                                        <tr>
+                                            <td colspan="7" class="text-center">Loading users...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <div>
+                                    <span id="paginationInfo">Showing 0 users</span>
+                                </div>
+                                <nav>
+                                    <ul class="pagination pagination-sm" id="pagination">
+                                        <!-- Pagination will be generated here -->
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Detail Modal -->
+                <div class="modal fade" id="userDetailModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">User Details</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body" id="userDetailContent">
+                                <!-- User details will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Predictions Section -->
+                <div id="predictionsSection" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3>Prediction Management</h3>
+                        <div class="d-flex">
+                            <input type="text" id="predictionSearch" class="form-control me-2" placeholder="Search by job role or user...">
+                            <select id="predictionFilter" class="form-control me-2" style="width: 150px;">
+                                <option value="">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="loadPredictions()">
+                                <i class="fas fa-sync-alt me-1"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Prediction Statistics -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="totalPredictionsCount">0</h4>
+                                            <p class="mb-0">Total Predictions</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-chart-line fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="avgConfidence">0%</h4>
+                                            <p class="mb-0">Avg. Confidence</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-percentage fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="todayPredictions">0</h4>
+                                            <p class="mb-0">Today</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-calendar-day fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="topRole">-</h4>
+                                            <p class="mb-0">Top Role</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-briefcase fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Predictions Table -->
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>User</th>
+                                            <th>Job Role</th>
+                                            <th>Confidence</th>
+                                            <th>Skills</th>
+                                            <th>Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="predictionsTable">
+                                        <tr>
+                                            <td colspan="7" class="text-center">Loading predictions...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <div>
+                                    <span id="predictionsInfo">Showing 0 predictions</span>
+                                </div>
+                                <nav>
+                                    <ul class="pagination pagination-sm" id="predictionsPagination"></ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Prediction Chart -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Job Role Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="predictionChart">
+                                <p class="text-muted text-center py-4">Chart will load with prediction data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback Management Section -->
+                <div id="feedbackSection" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3>Feedback Management</h3>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary" onclick="exportFeedback()">
+                                <i class="fas fa-download me-1"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Feedback Filters -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label">Rating Filter</label>
+                                    <select class="form-control" id="feedbackRatingFilter" onchange="loadFeedbackData()">
+                                        <option value="">All Ratings</option>
+                                        <option value="1">1 Star</option>
+                                        <option value="2">2 Stars</option>
+                                        <option value="3">3 Stars</option>
+                                        <option value="4">4 Stars</option>
+                                        <option value="5">5 Stars</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Type Filter</label>
+                                    <select class="form-control" id="feedbackTypeFilter" onchange="loadFeedbackData()">
+                                        <option value="">All Types</option>
+                                        <option value="prediction">Prediction</option>
+                                        <option value="system">System</option>
+                                        <option value="general">General</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Date From</label>
+                                    <input type="date" class="form-control" id="feedbackDateFrom" onchange="loadFeedbackData()">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Date To</label>
+                                    <input type="date" class="form-control" id="feedbackDateTo" onchange="loadFeedbackData()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Feedback Analytics -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h2 id="totalFeedbackCount" class="text-primary">0</h2>
+                                    <p class="text-muted mb-0">Total Feedback</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h2 id="avgFeedbackRating" class="text-success">0.0</h2>
+                                    <p class="text-muted mb-0">Avg Rating</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h2 id="feedbackWithComments" class="text-info">0</h2>
+                                    <p class="text-muted mb-0">With Comments</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h2 id="recentFeedback" class="text-warning">0</h2>
+                                    <p class="text-muted mb-0">Last 7 Days</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Rating Distribution Chart -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Rating Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="feedbackRatingChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Feedback Table -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">All Feedback</h5>
+                            <div class="d-flex align-items-center">
+                                <div class="input-group me-3" style="width: 300px;">
+                                    <input type="text" class="form-control" placeholder="Search feedback..." 
+                                        id="feedbackSearch" onkeyup="loadFeedbackData()">
+                                    <button class="btn btn-outline-secondary" type="button">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                                <span class="text-muted me-3" id="feedbackPaginationInfo">Page 1 of 1</span>
+                                <div>
+                                    <button class="btn btn-outline-secondary" onclick="changeFeedbackPage(-1)">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary ms-2" onclick="changeFeedbackPage(1)">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>User</th>
+                                            <th>Rating</th>
+                                            <th>Type</th>
+                                            <th>Comment</th>
+                                            <th>Prediction</th>
+                                            <th>Was Correct</th>
+                                            <th>Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="feedbackTable">
+                                        <!-- Will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Retraining Section -->
+                <div id="modelRetrainSection" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3><i class="fas fa-brain me-2"></i> Model Retraining</h3>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="validateTrainingData()">
+                                <i class="fas fa-check-circle me-1"></i> Validate Data
+                            </button>
+                            <button class="btn btn-success" onclick="retrainModel()" id="retrainBtn">
+                                <i class="fas fa-sync-alt me-1"></i> Retrain Model
+                            </button>
+                            <button class="btn btn-danger" onclick="forceRetrainModel()" id="forceRetrainBtn">
+                                <i class="fas fa-bolt me-1"></i> Force Retrain
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Model Information Card -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Current Model Information</h5>
+                            <button class="btn btn-sm btn-outline-primary" onclick="loadModelInfo()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="modelInfoContent">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2">Loading model information...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Data Validation Card -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-database me-2"></i> Training Data Validation</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="dataValidationContent">
+                                <p class="text-muted">Click "Validate Data" to check training data quality and availability</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Retraining Controls -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-cogs me-2"></i> Retraining Controls</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Training Parameters</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="useCustomParams">
+                                            <label class="form-check-label" for="useCustomParams">
+                                                Use Custom Parameters
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="customParams" style="display: none;">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Number of Trees</label>
+                                                <input type="number" class="form-control" id="nEstimators" value="100" min="10" max="500">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Max Depth</label>
+                                                <input type="number" class="form-control" id="maxDepth" value="10" min="3" max="50">
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Test Size (%)</label>
+                                                <input type="number" class="form-control" id="testSize" value="20" min="10" max="50" step="5">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Random State</label>
+                                                <input type="number" class="form-control" id="randomState" value="42" min="0" max="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="alert alert-info">
+                                        <h6><i class="fas fa-lightbulb me-1"></i> Retraining Guidelines</h6>
+                                        <ul class="mb-0 small">
+                                            <li><strong>Retrain Model:</strong> Trains only if sufficient data available (≥50 samples)</li>
+                                            <li><strong>Force Retrain:</strong> Trains regardless of data quantity (may produce poor results)</li>
+                                            <li>Recommended to retrain after every 100 new predictions</li>
+                                            <li>Training time depends on data size (typically 1-5 minutes)</li>
+                                            <li>Model will be automatically saved and ready for use</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <button class="btn btn-primary w-100" onclick="showTrainingHistory()">
+                                    <i class="fas fa-history me-1"></i> View Training History
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Performance Metrics -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i> Model Performance Metrics</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="performanceMetrics">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <div class="card border-primary">
+                                            <div class="card-body">
+                                                <h3 id="metricAccuracy" class="text-primary">0.00%</h3>
+                                                <p class="text-muted mb-0">Accuracy</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card border-success">
+                                            <div class="card-body">
+                                                <h3 id="metricF1" class="text-success">0.00%</h3>
+                                                <p class="text-muted mb-0">F1 Score</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card border-info">
+                                            <div class="card-body">
+                                                <h3 id="metricPrecision" class="text-info">0.00%</h3>
+                                                <p class="text-muted mb-0">Precision</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card border-warning">
+                                            <div class="card-body">
+                                                <h3 id="metricRecall" class="text-warning">0.00%</h3>
+                                                <p class="text-muted mb-0">Recall</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Training History Modal -->
+                <div class="modal fade" id="trainingHistoryModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Model Training History</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="trainingHistoryContent">
+                                    <p class="text-center py-4">Loading training history...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress Modal -->
+                <div class="modal fade" id="trainingProgressModal" tabindex="-1" data-bs-backdrop="static">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Model Training in Progress</h5>
+                            </div>
+                            <div class="modal-body">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                                        <span class="visually-hidden">Training...</span>
+                                    </div>
+                                    <h5 id="trainingStatus">Initializing training...</h5>
+                                    <p id="trainingDetails" class="text-muted">Please wait while the model is being trained</p>
+                                    <div class="progress mt-3">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                             id="trainingProgressBar" style="width: 0%"></div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <small class="text-muted" id="trainingETA">Estimated time: 1-5 minutes</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Section (Placeholder) -->
+                <div id="analyticsSection" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3>Analytics Dashboard</h3>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary">
+                                <i class="fas fa-download me-1"></i> Export Report
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i> Analytics Section</h6>
+                        <p class="mb-0">Advanced analytics and insights will be available here. Check back soon for updates!</p>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i> Coming Soon</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center py-5">
+                                <i class="fas fa-chart-line fa-4x text-muted mb-3"></i>
+                                <h4>Advanced Analytics</h4>
+                                <p class="text-muted">Detailed analytics, trend analysis, and predictive insights will be available in the next update.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap & jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
